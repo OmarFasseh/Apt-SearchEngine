@@ -2,16 +2,19 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.File;  
-import java.io.FileNotFoundException;
-import java.util.List;
 import java.util.Scanner;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.*;
+
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 public class Crawler
 {
@@ -50,37 +53,30 @@ public class Crawler
     public static void Download(String urlString) throws IOException
     {
         System.out.println("Downloading " + urlString);
-        URL url = new URL(urlString);
+        Document doc = Jsoup.connect(urlString).get();
         int i = 0;
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()));
+            //Download the page
             BufferedWriter writer = new BufferedWriter(new FileWriter("page"+(pagesCount)+".html"));
             pagesCount++;
-            String line;
-            //Check for all urls mentioned in page and add them to the crawl list
-            String regex = "\\b((?:https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:, .;]*[-a-zA-Z0-9+&@#/%=~_|])";
-            //Compile regex
-            Pattern p = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            while((line = reader.readLine()) != null)
-            {
-                writer.write(line);   
-                //Match between string and regex
-                Matcher m = p.matcher(line);
-                // Find the next occurence of url in the pattern
-                while (m.find()) {
-                    crawlList.add(line.substring(m.start(0), m.end(0)));
-                    i++;
-                    if (i >= 50) //break if at same doc a lot
-                        break;
-                }
-                if (i >= 50)
-                    break;
-            }
+            writer.write(doc.toString());
             writer.flush();
             writer.close();
-            System.out.println(url + " Downloaded");
-        } catch (Exception e) {}
+            //Extract URLs
+            Elements hrefs = doc.select("a");
+            for (Element href : hrefs)
+            {
+                String absLink = href.attr("abs:href");
+                crawlList.add(absLink);
+                i++;
+                if(i > 50)
+                    break;
+            }
+            System.out.println(urlString + " Downloaded");
+        } catch (Exception e) {
+            System.out.println("An exception occured while crawling " + urlString + " web page!");
+        }
         
     }
     
-}
+} 
