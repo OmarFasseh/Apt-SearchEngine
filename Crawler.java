@@ -3,6 +3,7 @@ import java.io.FileWriter;
 import java.io.File;  
 import java.util.Scanner;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.*;
 //JSoup imports
 import org.jsoup.Jsoup;
@@ -12,17 +13,18 @@ import org.jsoup.select.Elements;
 
 public class Crawler
 {
-    
-
-    ArrayList<String> crawlList;
+    //Number of pages downloaded so far
     int pagesCount;
-    String dbDir;
-    public void InitializeCrawler() throws IOException
+    DatabaseManager dbManager;
+    //Constructor
+    Crawler(DatabaseManager dbManager_)
     {
-        //Initialize the directory for the database
-        dbDir = System.getProperty("user.dir");
-        dbDir = dbDir.concat("/db/");
-        crawlList = new ArrayList<String>();
+        dbManager = dbManager_;
+    }
+
+    //Adds the initial crawling list to the database
+    public void InitializeCrawler() throws IOException, SQLException
+    {
         //Read initial list from websites.txt file
         try {
             File websitesFile = new File("websites.txt");
@@ -30,7 +32,7 @@ public class Crawler
             while(reader.hasNextLine())
             {
                 String website = reader.nextLine();
-                crawlList.add(website);
+                dbManager.InsertCrawlerURL(website);
             }
             reader.close();
         } catch (Exception e) {
@@ -38,16 +40,9 @@ public class Crawler
         }
     }
 
-    
-    public void Crawl() throws IOException
-    {
-        while (crawlList.size()!=0)
-        {
-            Download(crawlList.remove(0));
-        }
-    }
 
-    public void Download(String urlString) throws IOException
+    //Crawls the given url, downloads the page and adds to the db all urls found
+    public void Crawl(String urlString) throws IOException, SQLException
     {
         System.out.println("Downloading " + urlString);
         Document doc = Jsoup.connect(urlString).get();
@@ -63,7 +58,7 @@ public class Crawler
             Elements hrefs = doc.select("a");
             for (Element href : hrefs) {
                 String absLink = href.attr("abs:href");
-                crawlList.add(absLink);
+                dbManager.InsertCrawlerURL(absLink);
                 i++;
                 if (i > 50)
                     break;
