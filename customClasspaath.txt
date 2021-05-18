@@ -1,2 +1,2 @@
-SET CLASSPATH=.;K:\Year 3 CCE\Term 2\APT\Project\lib\jsoup-1.13.1.jar;%CLASSPATH%
-SET CLASSPATH=.;K:\Year 3 CCE\Term 2\APT\Project\lib\sqlite-jdbc-3.34.0.jar;%CLASSPATH%
+SET CLASSPATH=.;K:\Year 3 CCE\Term 2\APT\Project\github\Apt-SearchEngine\lib\jsoup-1.13.1.jar;%CLASSPATH%
+SET CLASSPATH=.;K:\Year 3 CCE\Term 2\APT\Project\github\Apt-SearchEngine\lib\sqlite-jdbc-3.34.0.jar;%CLASSPATH%

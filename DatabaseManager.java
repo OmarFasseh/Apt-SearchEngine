@@ -81,14 +81,12 @@ public class DatabaseManager {
             Statement stmt = null;
 
             PreparedStatement ps = crawlerConnection.prepareStatement(
-                    "INSERT INTO crawlerURLs (url, selectStatus, lastCrawled) VALUES(?,?,?) ON CONFLICT (url) DO UPDATE SET selectStatus = ?, lastCrawled = ?");
+                    "INSERT INTO crawlerURLs (url, selectStatus, lastCrawled) VALUES(?,?,?) ON CONFLICT DO NOTHING");
             Date date = new Date();
-            java.sql.Timestamp sqlTime = new java.sql.Timestamp(date.getTime());
+            java.sql.Timestamp sqlTime = new java.sql.Timestamp(date.getTime()-100);
             ps.setString(1, url);
-            ps.setBoolean(2, Scheduler.schedulingStatus);
-            ps.setTimestamp(3, sqlTime);
-            ps.setBoolean(4, Scheduler.schedulingStatus);
-            ps.setTimestamp(5, sqlTime);
+            ps.setBoolean(2, Scheduler.schedulingStatus); 
+            ps.setTimestamp(3, sqlTime); //We never crawled it, so we set the crawling time to oldest date so that we make sure to crawl, for now
             try {
                 ps.executeUpdate();
             } catch (SQLException e) {
@@ -103,7 +101,7 @@ public class DatabaseManager {
     public String GetCrawlerTopURL() {
         try {
             PreparedStatement ps = crawlerConnection
-                    .prepareStatement("SELECT url FROM crawlerURLs WHERE selectStatus = ? ORDER BY lastCrawled DESC");
+                    .prepareStatement("SELECT url FROM crawlerURLs WHERE crawlerURLs.selectStatus = ? ORDER BY lastCrawled DESC LIMIT 1");
             ps.setBoolean(1, Scheduler.schedulingStatus);
             try {
                 ResultSet rs = ps.executeQuery();
@@ -116,6 +114,7 @@ public class DatabaseManager {
                 ps.setTimestamp(2, sqlTime);
                 ps.setString(3, url);
                 ps.executeUpdate();
+
                 return url;
             } catch (SQLException e) {
                 throw new Error("Problem", e);
