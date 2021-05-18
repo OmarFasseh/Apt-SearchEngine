@@ -1,16 +1,10 @@
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.File;  
 import java.util.Scanner;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.*;
-
-import org.jsoup.Connection;
+//JSoup imports
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -20,10 +14,14 @@ public class Crawler
 {
     
 
-    static ArrayList<String> crawlList;
-    static int pagesCount;
-    public static void InitializeCrawler() throws IOException
+    ArrayList<String> crawlList;
+    int pagesCount;
+    String dbDir;
+    public void InitializeCrawler() throws IOException
     {
+        //Initialize the directory for the database
+        dbDir = System.getProperty("user.dir");
+        dbDir = dbDir.concat("/db/");
         crawlList = new ArrayList<String>();
         //Read initial list from websites.txt file
         try {
@@ -41,42 +39,40 @@ public class Crawler
     }
 
     
-    public static void main(String args[]) throws IOException
+    public void Crawl() throws IOException
     {
-        Crawler.InitializeCrawler();
-        while (Crawler.crawlList.size()!=0)
+        while (crawlList.size()!=0)
         {
             Download(crawlList.remove(0));
         }
     }
 
-    public static void Download(String urlString) throws IOException
+    public void Download(String urlString) throws IOException
     {
         System.out.println("Downloading " + urlString);
         Document doc = Jsoup.connect(urlString).get();
         int i = 0;
         try {
             //Download the page
-            BufferedWriter writer = new BufferedWriter(new FileWriter("page"+(pagesCount)+".html"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter("page" + (pagesCount) + ".html"));
             pagesCount++;
             writer.write(doc.toString());
             writer.flush();
             writer.close();
             //Extract URLs
             Elements hrefs = doc.select("a");
-            for (Element href : hrefs)
-            {
+            for (Element href : hrefs) {
                 String absLink = href.attr("abs:href");
                 crawlList.add(absLink);
                 i++;
-                if(i > 50)
+                if (i > 50)
                     break;
             }
             System.out.println(urlString + " Downloaded");
         } catch (Exception e) {
             System.out.println("An exception occured while crawling " + urlString + " web page!");
         }
-        
+
     }
-    
-} 
+        
+}
