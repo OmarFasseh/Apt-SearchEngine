@@ -23,7 +23,7 @@ public class Crawler
     }
 
     //Adds the initial crawling list to the database
-    public void InitializeCrawler() throws IOException, SQLException
+    public void InitializeCrawler()
     {
         //Read initial list from websites.txt file
         try {
@@ -37,19 +37,21 @@ public class Crawler
             reader.close();
         } catch (Exception e) {
             System.out.println("An exception occured while reading the initial websites list!");
+            e.printStackTrace();
         }
+        
     }
 
 
     //Crawls the given url, downloads the page and adds to the db all urls found
-    public void Crawl(String urlString) throws IOException, SQLException
+    public void Crawl(String urlString)
     {
-        System.out.println("Downloading " + urlString);
-        Document doc = Jsoup.connect(urlString).get();
-        int i = 0;
         try {
+            Document doc = Jsoup.connect(urlString).get();
+            System.out.println("Downloading " + urlString);
+            int i = 0;
             //Download the page
-            BufferedWriter writer = new BufferedWriter(new FileWriter("page" + (pagesCount) + ".html"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter("WebPages/page" + (pagesCount) + ".html"));
             pagesCount++;
             writer.write(doc.toString());
             writer.flush();
@@ -64,10 +66,11 @@ public class Crawler
                     break;
             }
             System.out.println(urlString + " Downloaded");
+        } catch (IOException e) {
+            e.printStackTrace();
         } catch (Exception e) {
             System.out.println("An exception occured while crawling " + urlString + " web page!");
+            e.printStackTrace();
         }
-
     }
-        
 }

@@ -13,13 +13,16 @@ public class Application
         Crawler crawler = new Crawler(dbManager);
         Scheduler scheduler = new Scheduler(dbManager);
 
-        //Create the database for the first time
-        dbManager.CreateDB();
+        dbManager.InitializeConnection();
+
         //Let the crawler begin
         crawler.InitializeCrawler();
         while(scheduler.SleepTime()==0)
         {
-            crawler.Crawl(scheduler.GetNextWebsite());
+            String nextWebsite = scheduler.GetNextWebsite();
+            if (nextWebsite.length()==0)
+                break;            
+            crawler.Crawl(nextWebsite);
         }
     }
 
