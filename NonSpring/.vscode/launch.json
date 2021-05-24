@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launch RobotManager",
+            "request": "launch",
+            "mainClass": "RobotManager",
+            "projectName": "NonSpring_697f9ae4"
+        },
+        {
+            "type": "java",
             "name": "Debug (Launch) - Current File",
             "request": "launch",
             "mainClass": "${file}"

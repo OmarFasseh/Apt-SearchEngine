@@ -85,7 +85,7 @@ public class RobotManager {
 
         //Get Path
         String path = url.getPath();
-        if(!url.getQuery().isEmpty())
+        if(url.getQuery() !=null && !url.getQuery().isEmpty())
             path += "?"+url.getQuery();
 
         RobotRules rule = urls.get(hostName);
@@ -98,8 +98,15 @@ public class RobotManager {
     }
     public static void main(String[] args)  {
 
+        String urls [] = {"https://amazon.com/slp/sasdas/b"};
         try {
-            readRobotTxt(new URL("https://www.apessmartsolutions.com/robots.txt"));
+            readRobotTxt(new URL("https://www.amazon.com"));
+
+            for(int i =0; i< urls.length;i++){
+                boolean isAllowed = isAllowed(new URL(urls[i]));
+
+                System.out.println(urls[i]+" "+ isAllowed);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
