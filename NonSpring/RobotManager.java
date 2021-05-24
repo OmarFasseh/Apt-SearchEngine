@@ -2,18 +2,16 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class RobotManager {
 
     static LinkedHashMap<String,RobotRules> urls = new LinkedHashMap<String, RobotRules>();
-    static String  name = "Applebot";
+    static String  name = "Fa5orgy";
     public static void readRobotTxt(URL url) {
 
         // Intialize Rules and download robot.txt
@@ -28,7 +26,6 @@ public class RobotManager {
             e.printStackTrace();
             return;
         }
-        System.out.println(robotTxtUrl);
         String text = doc.body().text();
 
         //Get Index of Crawler Bots Group
@@ -43,10 +40,7 @@ public class RobotManager {
 
         //Get RobotsTXT Rules
         while (isFound) {
-            System.out.println("I found the text "+matcher.group()+" starting at index "+
-                    matcher.start()+" and ending at index "+matcher.end());
             String group [] = text.substring(matcher.start()).split(" ");
-
             int numberOfRules = 0;
             boolean groupFinished = false;
             for(int i = 0 ; i<group.length;i++){
@@ -60,13 +54,11 @@ public class RobotManager {
                         numberOfRules++;
                         i++;
                         rules.addDisallowed(group[i]);
-                        System.out.println("Disallow: " + group[i]);
                         break;
                     case "Allow:":
                         numberOfRules++;
                         i++;
                         rules.addAllowed(group[i]);
-                        System.out.println("Allow: " + group[i]);
                         break;
                     }
                 if(groupFinished)
@@ -98,15 +90,15 @@ public class RobotManager {
     }
     public static void main(String[] args)  {
 
-        String urls [] = {"https://amazon.com/slp/sasdas/b"};
+        String urls [] = {"http://twitter.com/DAAUSA?asda=asdas","http://twitter.com/DAAUSA"};
         try {
-            readRobotTxt(new URL("https://www.amazon.com"));
+            readRobotTxt(new URL("http://twitter.com"));
 
             for(int i =0; i< urls.length;i++){
                 boolean isAllowed = isAllowed(new URL(urls[i]));
-
-                System.out.println(urls[i]+" "+ isAllowed);
+                System.out.println(urls[i] +" " +isAllowed);
             }
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -130,8 +122,7 @@ class RobotRules {
         disallowed.add(createPattern(path));
     }
     Pattern createPattern(String path){
-
-        return  Pattern.compile(path.replaceAll("\\*",".*"));
+        return  Pattern.compile(path.replace("*",".*").replace("?", "\\?"));
     }
     boolean isDisallowed( String path){
 

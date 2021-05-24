@@ -1,4 +1,8 @@
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Date;
 //Sql Imports
 import java.sql.Connection;
@@ -28,7 +32,6 @@ public class DatabaseManager {
 
     public void InsertCrawlerURL(String url) throws SQLException {
         try {
-            if(url.length()==0) return;
             PreparedStatement ps = conn.prepareStatement(
                     "INSERT IGNORE INTO crawlerURLs (url, selectStatus, lastCrawled) VALUES(?,?,?)");
             Date date = new Date();

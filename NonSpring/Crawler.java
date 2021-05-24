@@ -3,13 +3,14 @@ import java.io.FileWriter;
 import java.io.File;  
 import java.util.Scanner;
 import java.io.IOException;
-import java.sql.SQLException;
-import java.util.*;
+import java.net.URI;
+import java.net.URL;
 //JSoup imports
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.jsoup.select.Evaluator.IsEmpty;
 
 public class Crawler
 {
@@ -60,7 +61,23 @@ public class Crawler
             Elements hrefs = doc.select("a");
             for (Element href : hrefs) {
                 String absLink = href.attr("abs:href");
-                dbManager.InsertCrawlerURL(absLink);
+                if(absLink.length()==0) continue;
+                URL temp = new URL(absLink);
+                
+                if(!temp.getProtocol().equals("http") && !temp.getProtocol().equals("https"))
+                    continue;
+                String path = temp.getPath();
+                if(path == null || path.isEmpty() ||path.equals("/index.html")||path.equals("/#"))
+                    path = "/";
+                URI link = new URI(temp.getProtocol(), temp.getUserInfo(), temp.getHost(), temp.getPort(), path, temp.getQuery(), temp.getRef());
+                if(!RobotManager.isAllowed(link.toURL())){
+                    System.out.println(absLink + " Not Allowed");
+                    continue;
+                }
+                // System.out.println(absLink+ " Allowed");
+                String url = link.toASCIIString();
+                
+                dbManager.InsertCrawlerURL(url);
                 i++;
                 if (i > 50)
                     break;
