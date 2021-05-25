@@ -7,8 +7,6 @@ public class Scheduler
 {
     
     DatabaseManager dbManager;
-    //Scheduling status, Will be used to get  the websites from the db
-    static boolean schedulingStatus = false;
     
     Scheduler(DatabaseManager dbManager_)
     {

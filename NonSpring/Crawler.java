@@ -1,6 +1,7 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.File;  
+import java.io.File;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.io.IOException;
 import java.net.URI;
@@ -30,11 +31,13 @@ public class Crawler
         try {
             File websitesFile = new File("websites.txt");
             Scanner reader = new Scanner(websitesFile);
+            LinkedList<String> urlsToAdd = new LinkedList<String>();
             while(reader.hasNextLine())
             {
                 String website = reader.nextLine();
-                dbManager.InsertCrawlerURL(website);
+                urlsToAdd.push(website);
             }
+            dbManager.InsertCrawlerURLS(urlsToAdd);
             reader.close();
         } catch (Exception e) {
             System.out.println("An exception occured while reading the initial websites list!");
@@ -59,6 +62,7 @@ public class Crawler
             writer.close();
             //Extract URLs
             Elements hrefs = doc.select("a");
+            LinkedList<String> urlsToAdd = new LinkedList<String>();
             for (Element href : hrefs) {
                 String absLink = href.attr("abs:href");
                 if(absLink.length()==0) continue;
@@ -76,12 +80,9 @@ public class Crawler
                 }
                 // System.out.println(absLink+ " Allowed");
                 String url = link.toASCIIString();
-                
-                dbManager.InsertCrawlerURL(url);
-                i++;
-                if (i > 50)
-                    break;
+                urlsToAdd.add(url);
             }
+            dbManager.InsertCrawlerURLS(urlsToAdd);
             System.out.println(urlString + " Downloaded");
         } catch (IOException e) {
             e.printStackTrace();
