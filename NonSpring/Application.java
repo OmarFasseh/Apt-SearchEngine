@@ -1,4 +1,6 @@
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 
 
@@ -8,22 +10,33 @@ public class Application
     
     public static void main(String args[]) throws IOException, SQLException
     {
+
+        
         //Creaate the database manager, crawler, scheduler, indexer, etc
         DatabaseManager dbManager = new DatabaseManager();
-        Crawler crawler = new Crawler(dbManager);
-        Scheduler scheduler = new Scheduler(dbManager);
 
+        
         dbManager.InitializeConnection();
+        dbManager.init();
 
-        //Let the crawler begin
-        crawler.InitializeCrawler();
-        while(scheduler.SleepTime()==0)
-        {
-            String nextWebsite = scheduler.GetNextWebsite();
-            if (nextWebsite.length()==0)
-                break;            
-            crawler.Crawl(nextWebsite);
+        //Get Number of Threads
+        System.out.println("Enter Number of Threads:");
+        BufferedReader in = new BufferedReader (new InputStreamReader(System.in));
+        int numberOfThreads= Integer.parseInt(in.readLine()); // for taking a number as an input 
+       
+        for( int i=0;i<numberOfThreads;i++){
+            Crawler thread = new Crawler(dbManager);
+            thread.setName(Integer.toString(i));
+            thread.start();
         }
+        //Let the crawler begin
+        // while(scheduler.SleepTime()==0)
+        // {
+        //     String nextWebsite = scheduler.GetNextWebsite();
+        //     if (nextWebsite.length()==0)
+        //         break;            
+        //     crawler.Crawl(nextWebsite);
+        // }
     }
 
     

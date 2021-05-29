@@ -14,10 +14,10 @@ public class Scheduler
     }
 
     //Get the next scheduled website
-    public String GetNextWebsite()
-    {
-        return dbManager.GetCrawlerTopURL();
-    }
+    // public String[] GetNextWebsites()
+    // {
+    //     return dbManager.GetCrawlerTopURLs();
+    // }
 
     //Gets the time the crawler should sleep, as crawler shouldn't be working forever
     //For now it returns 0

@@ -37,39 +37,46 @@ public class RobotManager {
             matcher = pattern.matcher(text);
             isFound = matcher.find();
         }
+        try{
 
-        //Get RobotsTXT Rules
-        while (isFound) {
-            String group [] = text.substring(matcher.start()).split(" ");
-            int numberOfRules = 0;
-            boolean groupFinished = false;
-            for(int i = 0 ; i<group.length;i++){
-                switch (group[i]){
-                    case "User-agent:":
-                        if(numberOfRules !=0)
-                            groupFinished = true;
-                        i++;
-                        break;
-                    case "Disallow:":
-                        numberOfRules++;
-                        i++;
-                        rules.addDisallowed(group[i]);
-                        break;
-                    case "Allow:":
-                        numberOfRules++;
-                        i++;
-                        rules.addAllowed(group[i]);
+            //Get RobotsTXT Rules
+            while (isFound) {
+                String group [] = text.substring(matcher.start()).split(" ");
+                int numberOfRules = 0;
+                boolean groupFinished = false;
+                for(int i = 0 ; i<group.length;i++){
+                    switch (group[i]){
+                        case "User-agent:":
+                            if(numberOfRules !=0)
+                                groupFinished = true;
+                            i++;
+                            break;
+                        case "Disallow:":
+                            numberOfRules++;
+                            i++;
+                            if(i < group.length)
+                                rules.addDisallowed(group[i]);
+                            break;
+                        case "Allow:":
+                            numberOfRules++;
+                            i++;
+                            if(i < group.length)
+                                rules.addAllowed(group[i]);
+                            break;
+                        }
+                    if(groupFinished)
                         break;
                     }
-                if(groupFinished)
-                    break;
+                    isFound = matcher.find();
                 }
-                isFound = matcher.find();
-            }
+        }catch(Exception e){
+            e.printStackTrace();
+            System.out.println(url.toString() + " Is inValid");
+        }
 
     }
     public static boolean  isAllowed(URL url)  {
-
+        
         //Check if hostName was read before
         String hostName = url.getHost();
         if(!urls.containsKey(hostName))
@@ -90,9 +97,9 @@ public class RobotManager {
     }
     public static void main(String[] args)  {
 
-        String urls [] = {"http://twitter.com/DAAUSA?asda=asdas","http://twitter.com/DAAUSA"};
+        String urls [] = {"https://www.amazon.com/b/?&node=5160028011","https://www.amazon.com/b/?&node=5160028011"};
         try {
-            readRobotTxt(new URL("http://twitter.com"));
+            // readRobotTxt(new URL("http://www.amazon.com/"));
 
             for(int i =0; i< urls.length;i++){
                 boolean isAllowed = isAllowed(new URL(urls[i]));
@@ -111,13 +118,13 @@ class RobotRules {
 
     void  addAllowed(String path){
         //Ignore Directive if path is empty
-        if (path.isEmpty())
+        if (path.isEmpty()|| !path.startsWith("/"))
             return;
         allowed.add(createPattern(path));
     }
     void addDisallowed(String path){
         //Ignore Directive if path is empty
-        if (path.isEmpty())
+        if (path.isEmpty() || !path.startsWith("/"))
             return;
         disallowed.add(createPattern(path));
     }
