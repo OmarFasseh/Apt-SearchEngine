@@ -96,7 +96,7 @@ public class Crawler extends Thread {
                 }
             }
             try {
-                dbManager.UpdateCrawlerURLSStatus(urlsToCrawl, DatabaseManager.CrawlerState.Crawled,fileNames);
+                dbManager.UpdateCrawlerURLSStatus(urlsToCrawl, DatabaseManager.URLState.Crawled,fileNames);
 
             } catch (SQLException e) {
                 // TODO Auto-generated catch block

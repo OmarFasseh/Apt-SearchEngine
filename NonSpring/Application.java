@@ -29,7 +29,14 @@ public class Application
             thread.setName(Integer.toString(i));
             thread.start();
         }
-
+        try {
+            Thread.sleep(40000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Indexer indexer = new Indexer(dbManager);
+        indexer.Index();
+        
         //Let the crawler begin
         // while(scheduler.SleepTime()==0)
         // {
