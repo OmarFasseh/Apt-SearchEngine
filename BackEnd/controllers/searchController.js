@@ -3,9 +3,11 @@
  * @module controllers/search
  * @requires express
  */
-const resultsPerPage = 20
-
 const mysql = require('mysql')
+const stemmer = require('porter-stemmer').stemmer
+
+
+const resultsPerPage = 20
 const con = mysql.createConnection({
   host: "localhost",
   user: "nodeuser",
@@ -28,29 +30,28 @@ exports.getSearchResults = async (req, res, next) => {
     res.status(400).json({
       status: 'failed'
     })
+    return
   }
 
-  const word = (req.query.word)
-  const page = (req.query.page)
+  var word = stemmer(req.query.word)
+  console.log(word)
+  var page = 0
+  if (req.query.page)
+    page = req.query.page
+ 
   sql = "SELECT * FROM indexedurls where word = " + con.escape(word) + " ORDER BY count desc limit " + page * resultsPerPage + ", " + resultsPerPage
 
 
-  results = null
   con.query(sql, (err, result) => {
     if (err)
       throw err
-    console.log("Result: ")
-    results = result
-    Object.keys(result).forEach(function (key) {
-      var row = result[key]
-      console.log(row.url)
+    res.status(200).json({
+      status: 'success',
+      data: {
+        result
+      }
     })
+
   })
   
-  res.status(200).json({
-    status: 'success',
-    data: {
-      results
-    }
-  })
 }
