@@ -23,19 +23,27 @@ public class Application
         System.out.println("Enter Number of Threads:");
         BufferedReader in = new BufferedReader (new InputStreamReader(System.in));
         int numberOfThreads= Integer.parseInt(in.readLine()); // for taking a number as an input 
-       
+        
         for( int i=0;i<numberOfThreads;i++){
             Crawler thread = new Crawler(dbManager);
             thread.setName(Integer.toString(i));
             thread.start();
         }
+        try {
+            Thread.sleep(40000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        Indexer indexer = new Indexer(dbManager);
+        indexer.Index();
+        
         //Let the crawler begin
         // while(scheduler.SleepTime()==0)
         // {
         //     String nextWebsite = scheduler.GetNextWebsite();
         //     if (nextWebsite.length()==0)
         //         break;            
-        //     crawler.Crawl(nextWebsite);
+        //     cra-wler.Crawl(nextWebsite);
         // }
     }
 
