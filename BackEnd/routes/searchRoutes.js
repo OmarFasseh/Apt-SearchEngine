@@ -18,14 +18,26 @@
  const searchController = require('../controllers/searchController')
  
  /**
-  * Route for searching for tracks
-  * @name get/search
+  * Route for searching
+  * @name get/
   * @function
   * @memberof module:routes/search
   * @inner
   */
  router
    .route('/')
-   .get(searchController.getSearchResults)
+  .get(searchController.getSearchResults)
+   
+   
+ /**
+  * Route for getting search suggestions
+  * @name get/suggest
+  * @function
+  * @memberof module:routes/search
+  * @inner
+  */
+ router
+ .route('/suggest/')
+ .get(searchController.getSearchSuggestions)
  
  module.exports = router
