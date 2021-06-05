@@ -73,7 +73,6 @@ public class Indexer {
             }
         }
         dbManager.UpdateIndexerIDF(wordFoundCount, urls.size());
-        System.out.println(wordFoundCount.size());
         dbManager.UpdateIndexerFileNameStatus(fileNames, DatabaseManager.URLState.Indexed);
         // }while(true)
     }
@@ -106,7 +105,6 @@ public class Indexer {
                 table.replace(word, table.get(word) + 1);
 
             else {
-
                 table.put(word, 1);
                 // make snippet
                 int start = i - 10;
@@ -123,8 +121,8 @@ public class Indexer {
                 snip += words[j];
                 snipTable.put(word, snip);
                 // increment wordFoundCount for idf
-                if (wordFoundCount.contains(word)) {
-                    wordFoundCount.replace(word, table.get(word) + 1);
+                if (wordFoundCount.containsKey(word)) {
+                    wordFoundCount.replace(word, wordFoundCount.get(word) + 1);
                 } else {
                     wordFoundCount.put(word, 1);
                 }

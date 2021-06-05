@@ -296,6 +296,9 @@ public class DatabaseManager {
                 ps.setString(i + 1, url);
                 ps.setString(i + 2, e.getKey());
                 ps.setFloat(i + 3, (float)e.getValue() / wordsCount);
+                // if((float)e.getValue() / wordsCount==1 ){
+                //     System.out.println("count is "+wordsCount);
+                // }
                 ps.setString(i + 4, snipTable.get(e.getKey()));
                 i += 4;
             }
@@ -319,8 +322,8 @@ public class DatabaseManager {
             int i=0;
             for (Map.Entry<String, Integer> e : wordFoundCount.entrySet()) {
                 ps.setString(i + 1, e.getKey());
-                float idf =  docCount/(float)e.getValue();
-                ps.setFloat(i + 2, idf);
+                double idf =  Math.log(docCount/(double)e.getValue());
+                ps.setDouble(i + 2, idf);
                 i+=2;
             }
             try {
