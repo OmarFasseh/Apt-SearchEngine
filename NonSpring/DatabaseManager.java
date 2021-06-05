@@ -262,7 +262,7 @@ public class DatabaseManager {
     public void GetIndexerTopFileNames(LinkedList<String> fileNames, LinkedList<String> urls) {
         try {
             PreparedStatement ps = conn.prepareStatement(
-                    "SELECT url,fileName FROM crawlerURLs WHERE crawlerURLs.selectStatus = 2 ORDER BY lastCrawled ASC ");
+                    "SELECT url,fileName FROM crawlerURLs WHERE crawlerURLs.selectStatus = 2 OR crawlerURLs.selectStatus =3 ORDER BY lastCrawled ASC ");
             try {
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
@@ -281,20 +281,23 @@ public class DatabaseManager {
 
     }
 
-    public void InsertIndexerURLS(String url, Hashtable<String, Integer> fileWordsFrequency) {
+    public void InsertIndexerURLS(String url, Hashtable<String, Integer> fileWordsFrequency,
+            Hashtable<String, String> snipTable) {
         try {
-            if (fileWordsFrequency.size() == 0)
+            int wordsCount = fileWordsFrequency.size();
+            if (wordsCount == 0)
                 return;
-            String query = "INSERT IGNORE INTO indexedUrls (url, word, count) VALUES"
-                    + "(?,?,?),".repeat(fileWordsFrequency.size() - 1) + "(?,?,?)";
+            String query = "INSERT IGNORE INTO indexedUrls (url, word, tf , snippet) VALUES"
+                    + "(?,?,?,?),".repeat(fileWordsFrequency.size() - 1) + "(?,?,?,?)";
             PreparedStatement ps = conn.prepareStatement(query);
 
             int i = 0;
             for (Map.Entry<String, Integer> e : fileWordsFrequency.entrySet()) {
                 ps.setString(i + 1, url);
                 ps.setString(i + 2, e.getKey());
-                ps.setInt(i + 3, e.getValue());
-                i += 3;
+                ps.setFloat(i + 3, (float)e.getValue() / wordsCount);
+                ps.setString(i + 4, snipTable.get(e.getKey()));
+                i += 4;
             }
             try {
                 ps.executeUpdate();
@@ -302,6 +305,33 @@ public class DatabaseManager {
                 e.printStackTrace();
             }
         } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void UpdateIndexerIDF(Hashtable<String, Integer> wordFoundCount, int docCount) {
+        try {
+            if (wordFoundCount.size() == 0)
+                return;
+            String query = "INSERT INTO idftable    (word, idf) VALUES" + "(?,?),".repeat(wordFoundCount.size() - 1)
+                    + "(?,?)" + "ON DUPLICATE KEY UPDATE word=VALUES(word),idf=VALUES(idf)";
+            PreparedStatement ps = conn.prepareStatement(query);
+            int i=0;
+            for (Map.Entry<String, Integer> e : wordFoundCount.entrySet()) {
+                ps.setString(i + 1, e.getKey());
+                float idf =  docCount/(float)e.getValue();
+                ps.setFloat(i + 2, idf);
+                i+=2;
+            }
+            try {
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+        } catch (
+
+        SQLException e) {
             e.printStackTrace();
         }
     }
