@@ -1,7 +1,10 @@
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -24,7 +27,6 @@ public class RobotManager {
         try {
             doc = Jsoup.connect(robotTxtUrl).get();
         } catch (IOException e) {
-            e.printStackTrace();
             return;
         }
         String text = doc.body().text();
@@ -99,20 +101,60 @@ public class RobotManager {
     }
 
     public static void main(String[] args) {
+        try{
 
-        String urls[] = { "https://www.amazon.com/b/?&node=5160028011", "https://www.amazon.com/b/?&node=5160028011" };
-        try {
-            // readRobotTxt(new URL("http://www.amazon.com/"));
-
-            for (int i = 0; i < urls.length; i++) {
-                boolean isAllowed = isAllowed(new URL(urls[i]));
-                System.out.println(urls[i] + " " + isAllowed);
+            Document doc = Jsoup.connect("https://www.imdb.com/list/ls500936554/?ref_=watch_wchgd_1_5_m_wtw_disney_i").get();
+            
+            // System.out.println("Downloading "+Thread.currentThread().getName() +
+            // urlString);
+            // Download the page
+            int i = 0;
+            // Extract URLs
+            Elements hrefs = doc.select("a");
+    
+            for (Element href : hrefs) {
+                String absLink = href.attr("abs:href");
+                if (absLink.length() == 0)
+                    continue;
+                URL temp = new URL(absLink);
+    
+                if (!temp.getProtocol().equals("http") && !temp.getProtocol().equals("https"))
+                    continue;
+                String path = temp.getPath();
+                if (path == null || path.isEmpty() || path.equals("/index.html") || path.equals("/#"))
+                    path = "/";
+                URI link = new URI(temp.getProtocol(), temp.getUserInfo(), temp.getHost().toLowerCase(), temp.getPort(),
+                        path, temp.getQuery(), temp.getRef());
+                
+                if (!RobotManager.isAllowed(link.toURL())) {
+                    System.out.println("link Disaallowed: "+link.toASCIIString());
+                    continue;
+                }
+                i++;
+                System.out.println("link aallowed: "+link.toASCIIString());
+                
+                // System.out.println(absLink+ " Allowed");
+                String url = link.toASCIIString();
             }
-
-        } catch (IOException e) {
+   
+            System.out.println("Number of new links " + i);
+        }catch(Exception e){
             e.printStackTrace();
         }
     }
+    //     String urls[] = { "https://www.amazon.com/b/?&node=5160028011", "https://www.amazon.com/b/?&node=5160028011" };
+    //     try {
+    //         // readRobotTxt(new URL("http://www.amazon.com/"));
+
+    //         for (int i = 0; i < urls.length; i++) {
+    //             boolean isAllowed = isAllowed(new URL(urls[i]));
+    //             System.out.println(urls[i] + " " + isAllowed);
+    //         }
+
+    //     } catch (IOException e) {
+    //         e.printStackTrace();
+    //     }
+    // }
 
 }
 
@@ -137,7 +179,7 @@ class RobotRules {
     }
 
     Pattern createPattern(String path) {
-        return Pattern.compile(path.replace("*", ".*").replace("?", "\\?"));
+        return Pattern.compile(path.replace("*", ".*").replace("?", "\\?").replace("+", "\\+"));
     }
 
     boolean isDisallowed(String path) {
@@ -152,8 +194,8 @@ class RobotRules {
     }
 
     boolean isAllowed(String path) {
-        
-        //Check If DisAllowed
+
+        // Check If DisAllowed
         if (!this.isDisallowed(path)) {
             return true;
         }

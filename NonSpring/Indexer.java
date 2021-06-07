@@ -9,7 +9,7 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.StringTokenizer;
-
+import java.util.Map.Entry;
 import java.util.Iterator;
 
 import opennlp.tools.stemmer.PorterStemmer;
@@ -30,9 +30,13 @@ public class Indexer {
         System.out.println("Index is called");
         LinkedList<String> fileNames = new LinkedList<String>();
         LinkedList<String> urls = new LinkedList<String>();
+        LinkedList<String> titles = new LinkedList<String>();
         Hashtable<String, Integer> wordFoundCount = new Hashtable<String, Integer>(); // used for idf
-        dbManager.GetIndexerTopFileNames(fileNames, urls);
+        dbManager.GetIndexerTopFileNames(fileNames, urls,titles);
+        // fileNames.add("WebPages/8page2.txt");
+        // urls.add("https://theathletic.com/2629774/2021/06/03/tokyo-olympics-covid-19-coronavirus-50-days/");
         Iterator it = urls.iterator();
+        Iterator itTitle = titles.iterator();
         for (String fileName : fileNames) {
             BufferedReader reader;
             Hashtable<String, Integer> fileWordsFrequency = new Hashtable<String, Integer>();
@@ -63,7 +67,8 @@ public class Indexer {
                     throw new IllegalStateException();
                 }
                 String url = (String) it.next();
-                dbManager.InsertIndexerURLS(url, fileWordsFrequency, snipTable);
+                String title = (String) itTitle.next();
+                dbManager.InsertIndexerURLS(url, fileWordsFrequency, snipTable,title);
             } catch (FileNotFoundException e) {
                 System.out.println("An exception occured while opening " + fileName + " to index!");
                 e.printStackTrace();
@@ -130,5 +135,9 @@ public class Indexer {
                 }
             }
         }
+    }
+    public static void main(String args[]){
+        Indexer test = new Indexer(null);
+        test.Index();
     }
 }

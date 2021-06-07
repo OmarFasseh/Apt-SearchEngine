@@ -9,6 +9,13 @@
             "name": "Launch Indexer",
             "request": "launch",
             "mainClass": "Indexer",
+            "projectName": "NonSpring_697f9ae4"
+        },
+        {
+            "type": "java",
+            "name": "Launch Indexer",
+            "request": "launch",
+            "mainClass": "Indexer",
             "projectName": "NonSpring_ec6afc72"
         },
         {

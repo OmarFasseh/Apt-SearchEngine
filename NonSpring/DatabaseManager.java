@@ -25,8 +25,8 @@ public class DatabaseManager {
     Connection conn = null;
     private int numberOfCrawledPages = 0;
     private int numberOfPages = 0;
-    private int LIMIT = 100;
-
+    private int LIMIT = 5000;
+    LinkedList<String> intialSeeds = new LinkedList<String>();
     public int getNumberOfCrawledPages() {
         return numberOfCrawledPages;
     }
@@ -47,11 +47,11 @@ public class DatabaseManager {
         this.ResetCrawlerURLSStatus();
         this.loadSeeds();
         this.initNumberOfCrawledPages();
+        this.initNumberOfPages();
     }
-
     private void initNumberOfCrawledPages() {
         try {
-            String query = "SELECT COUNT(*) As rowCount FROM crawlerURLs WHERE selectStatus = 2";
+            String query = "SELECT COUNT(*) As rowCount FROM crawlerURLs WHERE selectStatus >= 2";
             PreparedStatement ps = conn.prepareStatement(query);
             try {
 
@@ -89,12 +89,14 @@ public class DatabaseManager {
         try {
             File websitesFile = new File("websites.txt");
             Scanner reader = new Scanner(websitesFile);
-            LinkedList<String> urlsToAdd = new LinkedList<String>();
             while (reader.hasNextLine()) {
                 String website = reader.nextLine();
+                LinkedList<String> urlsToAdd = new LinkedList<String>();
                 urlsToAdd.push(website);
+                this.InsertCrawlerURLS(urlsToAdd);
+                Thread.sleep(1000);
             }
-            this.InsertCrawlerURLS(urlsToAdd);
+            
             reader.close();
         } catch (Exception e) {
             System.out.println("An exception occured while reading the initial websites list!");
@@ -102,17 +104,20 @@ public class DatabaseManager {
         }
     }
 
-    public void InsertCrawlerURLS(LinkedList<String> urls) throws SQLException {
+    public int InsertCrawlerURLS(LinkedList<String> urls) throws SQLException {
         try {
             if (urls.size() == 0)
-                return;
+                return 0;
+            synchronized(this){
+                if(this.numberOfPages >= LIMIT+LIMIT) return 0;
+            }
             String query = "INSERT IGNORE INTO crawlerURLs (url, selectStatus, lastCrawled) VALUES"
                     + "(?,?,?),".repeat(urls.size() - 1) + "(?,?,?)";
             PreparedStatement ps = conn.prepareStatement(query);
             Date date = new Date();
             java.sql.Timestamp sqlTime = new java.sql.Timestamp(date.getTime() - 100);
             for (int i = 0; i < 3 * urls.size(); i += 3) {
-                String url = urls.get(i / 3).toLowerCase();
+                String url = urls.get(i / 3);
 
                 ps.setString(i + 1, url);
                 ps.setInt(i + 2, URLState.NotCrawled.ordinal());
@@ -120,43 +125,54 @@ public class DatabaseManager {
                                                  // that we make sure to crawl, for now
             }
             try {
-                ps.executeUpdate();
+                int rowsInserted = ps.executeUpdate();
+                synchronized(this){
+                    this.numberOfPages+= rowsInserted;
+                }
+                return rowsInserted;
                 // this.notifyAll();
             } catch (SQLException e) {
-                e.printStackTrace();
+                System.out.println("Error in Insert");
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            System.out.println("Error in Insert");
+            
         }
+        return 0;
     }
 
-    public void UpdateCrawlerURLSStatus(LinkedList<String> urls, URLState state, LinkedList<String> fileNames)
+    public void UpdateCrawlerURLSStatus(LinkedList<String> urls, URLState state, LinkedList<String> fileNames, LinkedList<String> titles)
             throws SQLException {
         try {
             if (urls.size() == 0)
                 return;
-            String query = "INSERT INTO crawlerURLs (url, selectStatus, lastCrawled,fileName) VALUES"
-                    + "(?,?,?,?),".repeat(urls.size() - 1) + "(?,?,?,?)"
-                    + "ON DUPLICATE KEY UPDATE selectStatus=VALUES(selectStatus),fileName=VALUES(fileName)";
+            String query = "INSERT INTO crawlerURLs (url, selectStatus, lastCrawled,fileName,title) VALUES"
+                    + "(?,?,?,?,?),".repeat(urls.size() - 1) + "(?,?,?,?,?)"
+                    + "ON DUPLICATE KEY UPDATE selectStatus=VALUES(selectStatus),fileName=VALUES(fileName), title = VALUES(title)";
             // set selectStatus = ? " + "WHERE" + " url = ? or".repeat(urls.size() - 1)
             // + " url = ? ";
             PreparedStatement ps = conn.prepareStatement(query);
 
             Date date = new Date();
             java.sql.Timestamp sqlTime = new java.sql.Timestamp(date.getTime() - 100);
-            for (int i = 0; i < 4 * urls.size(); i += 4) {
-                String url = urls.get(i / 4).toLowerCase();
+            for (int i = 0; i <5 * urls.size(); i += 5) {
+                String url = urls.get(i / 5);
 
                 ps.setString(i + 1, url);
                 ps.setInt(i + 2, state.ordinal());
                 ps.setTimestamp(i + 3, sqlTime);
 
                 String fileName = "";
+                String title = "";
                 if (fileNames != null) {
-                    fileName = fileNames.get(i / 4);
+                    fileName = fileNames.get(i / 5);
+                }
+                if(titles != null){
+                    title = titles.get(i/5);
                 }
                 ps.setString(i + 4, fileName);
+                ps.setString(i + 5, title);
             }
             // ps.setInt(1, state.ordinal());
             // System.out.println("Thread " + Thread.currentThread().getName() + " Updating
@@ -168,12 +184,18 @@ public class DatabaseManager {
             // }
             try {
                 ps.executeUpdate();
+                if(state == URLState.Crawled){
+                    synchronized(this){
+                        this.numberOfCrawledPages+= urls.size();
+                    }
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Error in Update: "+ urls.size());
         }
     }
 
@@ -208,8 +230,8 @@ public class DatabaseManager {
                 while (rs.next()) {
                     urls.add(rs.getString("url"));
                 }
-                this.UpdateCrawlerURLSStatus(urls, URLState.Crawling, null);
-                numberOfCrawledPages += urls.size();
+                this.UpdateCrawlerURLSStatus(urls, URLState.Crawling, null,null);
+               
 
                 System.out.println("Thread " + Thread.currentThread().getName() + " Fetched " + urls.size() + " pages");
                 return urls;
@@ -259,15 +281,19 @@ public class DatabaseManager {
         }
     }
 
-    public void GetIndexerTopFileNames(LinkedList<String> fileNames, LinkedList<String> urls) {
+    public void GetIndexerTopFileNames(LinkedList<String> fileNames, LinkedList<String> urls,LinkedList<String> titles) {
         try {
             PreparedStatement ps = conn.prepareStatement(
-                    "SELECT url,fileName FROM crawlerURLs WHERE crawlerURLs.selectStatus = 2 OR crawlerURLs.selectStatus =3 ORDER BY lastCrawled ASC ");
+                    "SELECT url,fileName,title FROM crawlerURLs WHERE crawlerURLs.selectStatus = 2 OR crawlerURLs.selectStatus =3 ORDER BY lastCrawled ASC ");
             try {
                 ResultSet rs = ps.executeQuery();
                 while (rs.next()) {
+                    if(rs.getString("fileName").equals("")){
+                        continue;
+                     }
                     urls.add(rs.getString("url"));
                     fileNames.add(rs.getString("fileName"));
+                    titles.add(rs.getString("title")); 
                 }
                 this.UpdateIndexerFileNameStatus(fileNames, URLState.Indexing);
                 System.out.println("Indexer Fetched " + fileNames.size() + " files");
@@ -282,13 +308,13 @@ public class DatabaseManager {
     }
 
     public void InsertIndexerURLS(String url, Hashtable<String, Integer> fileWordsFrequency,
-            Hashtable<String, String> snipTable) {
+            Hashtable<String, String> snipTable,String title) {
         try {
             int wordsCount = fileWordsFrequency.size();
             if (wordsCount == 0)
                 return;
-            String query = "INSERT IGNORE INTO indexedUrls (url, word, tf , snippet) VALUES"
-                    + "(?,?,?,?),".repeat(fileWordsFrequency.size() - 1) + "(?,?,?,?)";
+            String query = "INSERT IGNORE INTO indexedUrls (url, word, tf , snippet, title) VALUES"
+                    + "(?,?,?,?,?),".repeat(fileWordsFrequency.size() - 1) + "(?,?,?,?,?)";
             PreparedStatement ps = conn.prepareStatement(query);
 
             int i = 0;
@@ -297,7 +323,8 @@ public class DatabaseManager {
                 ps.setString(i + 2, e.getKey());
                 ps.setFloat(i + 3, (float)e.getValue() / wordsCount);
                 ps.setString(i + 4, snipTable.get(e.getKey()));
-                i += 4;
+                ps.setString(i+5, title);
+                i += 5;
             }
             try {
                 ps.executeUpdate();

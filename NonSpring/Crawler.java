@@ -28,9 +28,11 @@ public class Crawler extends Thread {
 
     // Crawls the given url, downloads the page and adds to the db all urls found
     public void run() {
+
         do {
             LinkedList<String> urlsToCrawl = dbManager.GetCrawlerTopURLs();
             LinkedList<String> fileNames = new LinkedList<String>();
+            LinkedList<String> titles = new LinkedList<String>();
             // Already Reached Crawling limit
             if (urlsToCrawl == null)
                 break;
@@ -45,6 +47,7 @@ public class Crawler extends Thread {
                 }
                 continue;
             }
+            LinkedList<String> urlsCrawled = new LinkedList<String>();
             for (int i = 0; i < urlsToCrawl.size(); i++) {
                 LinkedList<String> urlsToAdd = new LinkedList<String>();
 
@@ -52,6 +55,8 @@ public class Crawler extends Thread {
                 String urlString = urlsToCrawl.get(i);
                 try {
                     Document doc = Jsoup.connect(urlString).get();
+                    String title = doc.title().substring(0, doc.title().length()>100?100:doc.title().length());
+                    titles.add(title);
                     // System.out.println("Downloading "+Thread.currentThread().getName() +
                     // urlString);
                     // Download the page
@@ -75,7 +80,7 @@ public class Crawler extends Thread {
                         String path = temp.getPath();
                         if (path == null || path.isEmpty() || path.equals("/index.html") || path.equals("/#"))
                             path = "/";
-                        URI link = new URI(temp.getProtocol(), temp.getUserInfo(), temp.getHost(), temp.getPort(), path,
+                        URI link = new URI(temp.getProtocol(), temp.getUserInfo(), temp.getHost().toLowerCase(), temp.getPort(), path,
                                 temp.getQuery(), temp.getRef());
                         if (!RobotManager.isAllowed(link.toURL())) {
                             continue;
@@ -83,20 +88,24 @@ public class Crawler extends Thread {
                         // System.out.println(absLink+ " Allowed");
                         String url = link.toASCIIString();
                         urlsToAdd.add(url);
+                        if(urlsToAdd.size()>=400)
+                            break;
                     }
                     fileNames.add(fileName);
+                    urlsCrawled.add(urlString);
                     dbManager.InsertCrawlerURLS(urlsToAdd);
 
                     // System.out.println(urlString + " Downloaded");
                 } catch (IOException e) {
                     e.printStackTrace();
                 } catch (Exception e) {
-                    System.out.println("An exception occured while crawling " + urlString + " web page!");
                     e.printStackTrace();
+                    System.out.println("An exception occured while crawling " + urlString + " web page!");
+                   
                 }
             }
             try {
-                dbManager.UpdateCrawlerURLSStatus(urlsToCrawl, DatabaseManager.URLState.Crawled,fileNames);
+                dbManager.UpdateCrawlerURLSStatus(urlsCrawled, DatabaseManager.URLState.Crawled,fileNames,titles);
 
             } catch (SQLException e) {
                 // TODO Auto-generated catch block

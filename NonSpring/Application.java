@@ -15,22 +15,25 @@ public class Application
         //Creaate the database manager, crawler, scheduler, indexer, etc
         DatabaseManager dbManager = new DatabaseManager();
 
-        
-        dbManager.InitializeConnection();
-        dbManager.init();
-
         //Get Number of Threads
         System.out.println("Enter Number of Threads:");
         BufferedReader in = new BufferedReader (new InputStreamReader(System.in));
         int numberOfThreads= Integer.parseInt(in.readLine()); // for taking a number as an input 
         
+        dbManager.InitializeConnection();
+        dbManager.init();
+        
+        Crawler threads [] = new Crawler[numberOfThreads];
         for( int i=0;i<numberOfThreads;i++){
-            Crawler thread = new Crawler(dbManager);
-            thread.setName(Integer.toString(i));
-            thread.start();
+            threads[i] = new Crawler(dbManager);
+            threads[i].setName(Integer.toString(i));
+            threads[i].start();
+            
         }
         try {
-            Thread.sleep(40000);
+            for( int i=0;i<numberOfThreads;i++){
+                threads[i].join();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
